@@ -6,6 +6,7 @@ pipeline {
     }
 
     environment {
+        SONARQUBE_URL = 'SonarScanner'
         SONAR_TOKEN = credentials('sonarqube-token') // Jenkins credential ID (secret text)
     }
 
