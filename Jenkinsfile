@@ -1,11 +1,7 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'Maven 3' // Make sure this tool name matches Jenkins -> Global Tool Config
-    }
-
-    environment {
+environment {
         SONARQUBE_URL = 'SonarScanner'
         SONAR_TOKEN = credentials('sonarqube-token') // Jenkins credential ID (secret text)
     }
