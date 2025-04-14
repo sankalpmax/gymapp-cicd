@@ -1,55 +1,38 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    SONARQUBE_URL = 'SonarScanner'  // Must match the "Name" in Jenkins → SonarQube servers
-    SONAR_TOKEN = credentials('sonar-token') // Add SonarQube token in Jenkins credentials
-  }
-
-  stages {
-    stage('Checkout Code') {
-      steps {
-        git url: 'https://github.com/sankalpmax/gymapp-cicd.git', branch: 'main'
-      }
+    tools {
+        maven 'Maven 3' // Make sure this tool name matches Jenkins -> Global Tool Config
     }
 
-    stage('Install Dependencies') {
-      steps {
-        sh 'npm install'
-      }
+    environment {
+        SONAR_TOKEN = credentials('sonarqube-token') // Jenkins credential ID (secret text)
     }
 
-    stage('SonarQube Analysis') {
-      steps {
-        withSonarQubeEnv("${SONARQUBE_URL}") {
-          sh '''
-            npx sonar-scanner \
-              -Dsonar.projectKey=gymapp \
-              -Dsonar.projectName=gymapp \
-              -Dsonar.sources=src \
-              -Dsonar.host.url=http://13.61.182.203:5000 \
-              -Dsonar.login=${SONAR_TOKEN}
-          '''
+    stages {
+        stage('Checkout') {
+            steps {
+                git 'https://github.com/sankalpmax/gymapp-cicd.git'
+            }
         }
-      }
-    }
 
-    stage('Build App') {
-      steps {
-        sh 'npm run build'
-      }
-    }
+        stage('Build') {
+            steps {
+                sh 'mvn clean install'
+            }
+        }
 
-    stage('Archive Artifacts') {
-      steps {
-        archiveArtifacts artifacts: 'dist/**', fingerprint: true
-      }
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('MySonarQube') { // This name must match Jenkins -> SonarQube config
+                    sh """
+                    mvn sonar:sonar \
+                        -Dsonar.projectKey=gym-app \
+                        -Dsonar.host.url=http://13.61.182.203:5000 \
+                        -Dsonar.login=$SONAR_TOKEN
+                    """
+                }
+            }
+        }
     }
-  }
-
-  post {
-    always {
-      echo 'Pipeline finished.'
-    }
-  }
 }
